@@ -87,7 +87,7 @@
     </div>
     <div class="item">
       <input type="checkbox">
-      <p>Try do it with out any libraries</p>
+      <p>Try do it without any libraries</p>
     </div>
     <div class="item">
       <input type="checkbox">
@@ -104,6 +104,25 @@
   </div>
 
 <script>
+const checkboxes = Array.from(document.querySelectorAll('.inbox input[type="checkbox"]'));
+
+function checkInBetween(c1, c2) {
+  const index1 = checkboxes.indexOf(c1);
+  const index2 = checkboxes.indexOf(c2);
+
+  checkboxes
+    .slice(Math.min(index1, index2), Math.max(index1, index2) + 1)
+    .map((c) => c.checked = true);
+}
+
+let lastChecked;
+
+checkboxes.forEach(checkbox => checkbox.addEventListener('click', function(e) {
+  if (e.shiftKey && this.checked) {
+    checkInBetween(this, lastChecked);
+  }
+  lastChecked = this;
+}));
 </script>
 </body>
 </html>
