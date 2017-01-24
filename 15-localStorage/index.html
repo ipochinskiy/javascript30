@@ -26,9 +26,53 @@
   </div>
 
 <script>
-  const addItems = document.querySelector('.add-items');
-  const itemsList = document.querySelector('.plates');
-  const items = [];
+  const htmlify = (plate, i) => (`
+    <li>
+      <input type="checkbox" data-index=${i} id="item${i}" ${plate.done ? 'checked' : ''} />
+      <label for="item${i}">${plate.text}</label>
+    </li>
+  `);
+
+  const performAndUpdate = (element, func) => (...args) => {
+    const plates = func(...args);
+    localStorage.setItem('items', JSON.stringify(plates));
+    element.innerHTML = plates.map(htmlify).join('');
+  };
+
+  const makeAddItem = (plates) => (text = '') => {
+    plates.push({ text, done: false });
+    return plates;
+  };
+
+  const makeToggleDone = (plates) => (index = -1) => {
+    if (index >= 0 && index < plates.length) {
+      plates[index].done = !plates[index].done;
+    }
+    return plates;
+  }
+
+  const formElement = document.querySelector('.add-items');
+  const ulElement = document.querySelector('.plates');
+
+  const items = JSON.parse(localStorage.getItem('items')) || [];
+
+  const addAndUpdate = performAndUpdate(ulElement, makeAddItem(items));
+  const toggleAndUpdate = performAndUpdate(ulElement, makeToggleDone(items));
+  const update = performAndUpdate(ulElement, () => items);
+
+  formElement.addEventListener('submit', function(e) {
+    e.preventDefault();
+    addAndUpdate(this.querySelector('[name=item]').value);
+    this.reset();
+  });
+
+  ulElement.addEventListener('click', function(e) {
+    if (e.target.matches('input')) {
+      toggleAndUpdate(e.target.dataset.index);
+    }
+  });
+
+  update();
 
 </script>
 
