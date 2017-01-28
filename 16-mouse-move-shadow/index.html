@@ -34,30 +34,39 @@
 <script>
   const hero = document.querySelector('.hero');
   const text = hero.querySelector('h1');
-  const walk = 500; // 100px
+  const walk = 100;
 
-  function shadow(e) {
-    const { offsetWidth: width, offsetHeight: height } = hero;
-    let { offsetX: x, offsetY: y } = e;
+  const vec = (x = 0, y = 0) => ({ x, y });
+  const vsum = (v1, v2) => ({ x: v1.x + v2.x, y: v1.y + v2.y });
 
-    if (this !== e.target) {
-      x = x + e.target.offsetLeft;
-      y = y + e.target.offsetTop;
-    }
+  const getElementCoords = (e) => {
+    const parent = vec(e.offsetX, e.offsetY);
+    const child = vec(e.target.offsetLeft, e.target.offsetTop);
 
-    const xWalk = Math.round((x / width * walk) - (walk / 2));
-    const yWalk = Math.round((y / height * walk) - (walk / 2));
+    return this === e.target ?
+      parent :
+      vsum(parent, child);
+  };
 
-    text.style.textShadow = `
-      ${xWalk}px ${yWalk}px 0 rgba(255,0,255,0.7),
-      ${xWalk * -1}px ${yWalk}px 0 rgba(0,255,255,0.7),
-      ${yWalk}px ${xWalk * -1}px 0 rgba(0,255,0,0.7),
-      ${yWalk * -1}px ${xWalk}px 0 rgba(0,0,255,0.7)
-    `;
+  const calculateDistance = (coords, size, walk) => {
+    const xWalk = Math.round((coords.x / size.x * walk) - (walk / 2));
+    const yWalk = Math.round((coords.y / size.y * walk) - (walk / 2));
+    return vec(xWalk, yWalk);
+  };
 
-  }
+  const getShadowStyle = (distance) => `
+    ${distance.x}px ${distance.y}px 0 rgba(255,0,255,0.7),
+    ${distance.x * -1}px ${distance.y}px 0 rgba(0,255,255,0.7),
+    ${distance.y}px ${distance.x * -1}px 0 rgba(0,255,0,0.7),
+    ${distance.y * -1}px ${distance.x}px 0 rgba(0,0,255,0.7)
+  `;
 
-  hero.addEventListener('mousemove', shadow);
+  hero.addEventListener('mousemove', (e) => {
+    const size = vec(hero.offsetWidth, hero.offsetHeight);
+    const coords = getElementCoords(e);
+    const distance = calculateDistance(coords, size, walk);
+    text.style.textShadow = getShadowStyle(distance);
+  });
 </script>
 </body>
 </html>
