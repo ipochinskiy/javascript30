@@ -1,100 +1,93 @@
+const mapPixels = (pixels, action) => {
+  const newPixels = [];
+  for (let i = 0; i < pixels.length; i += 4) {
+    const [ r, g, b, a ] = action(pixels.slice(i, i + 4), i);
+    newPixels[i + 0] = r;
+    newPixels[i + 1] = g;
+    newPixels[i + 2] = b;
+    newPixels[i + 3] = a;
+  }
+  return newPixels;
+};
+
+const isBetween = (val, min, max) => (val >= min) && (val <= max);
+
+const redEffect = (pixels) => mapPixels(
+  pixels,
+  ([ r, g, b, a ]) => [ r + 200, g - 50, b * 0.5, a ]
+);
+
+const rgbSplit = (pixels) => mapPixels(
+  pixels,
+  ([ r, g, b, a ], i) => [ pixels[i + 150], pixels[i - 499], pixels[i + 548], pixels[i + 3]]
+);
+
+const greenScreen = (pixels) => {
+  const levels = {};
+  rgbInputs.forEach((input) => levels[input.name] = input.value);
+
+  mapPixels(pixels, ([ r, g, b, a ]) => {
+    const is = isBetween(r, levels.rmin, levels.rmax)
+      && isBetween(g, levels.gmin, levels.gmax)
+      && isBetween(b, levels.bmin, levels.bmax);
+
+    return is ? [ r, g, b, 0 ] : [ r, g, b, a ];
+  });
+}
+
+const playSound = () => {
+  snap.currentTime = 0;
+  snap.play();
+};
+
+const createFotoElement = (data) => {
+  const link = document.createElement('a');
+  link.href = data;
+  link.setAttribute('download', 'handsome');
+  link.innerHTML = `<img src="${data}" alt="Handsome Man" />`;
+  return link;
+};
+
 const video = document.querySelector('.player');
 const canvas = document.querySelector('.photo');
 const ctx = canvas.getContext('2d');
 const strip = document.querySelector('.strip');
 const snap = document.querySelector('.snap');
+const rgbInputs = document.querySelectorAll('.rgb input');
 
-function getVideo() {
-  navigator.mediaDevices.getUserMedia({ video: true, audio: false })
+const getVideo = () => {
+  navigator.mediaDevices
+    .getUserMedia({ video: true, audio: false })
     .then(localMediaStream => {
-      console.log(localMediaStream);
       video.src = window.URL.createObjectURL(localMediaStream);
       video.play();
     })
-    .catch(err => {
-      console.error(`OH NO!!!`, err);
-    });
+    .catch(err => console.error(err.message, err.stack));
 }
 
-function paintToCanavas() {
-  const width = video.videoWidth;
-  const height = video.videoHeight;
+const paintToCanavas = () => {
+  const [ videoWidth: width, videoHeight: height ] = video;
+
   canvas.width = width;
   canvas.height = height;
 
   return setInterval(() => {
     ctx.drawImage(video, 0, 0, width, height);
-    // take the pixels out
-    let pixels = ctx.getImageData(0, 0, width, height);
-    // mess with them
-    // pixels = redEffect(pixels);
+    const pixels = ctx.getImageData(0, 0, width, height);
 
-    pixels = rgbSplit(pixels);
+    // const = newPixels = redEffect(pixels.data);
+    // const = newPixels = rgbSplit(pixels.data);
     // ctx.globalAlpha = 0.8;
+    // const = newPixels = greenScreen(pixels.data);
 
-    // pixels = greenScreen(pixels);
-    // put them back
-    ctx.putImageData(pixels, 0, 0);
+    ctx.putImageData(newPixels, 0, 0);
   }, 16);
 }
 
-function takePhoto() {
-  // played the sound
-  snap.currentTime = 0;
-  snap.play();
-
-  // take the data out of the canvas
-  const data = canvas.toDataURL('image/jpeg');
-  const link = document.createElement('a');
-  link.href = data;
-  link.setAttribute('download', 'handsome');
-  link.innerHTML = `<img src="${data}" alt="Handsome Man" />`;
+const takePhoto = () => {
+  playSound();
+  const link = createFotoElement(canvas.toDataURL('image/jpeg'));
   strip.insertBefore(link, strip.firsChild);
-}
-
-function redEffect(pixels) {
-  for(let i = 0; i < pixels.data.length; i+=4) {
-    pixels.data[i + 0] = pixels.data[i + 0] + 200; // RED
-    pixels.data[i + 1] = pixels.data[i + 1] - 50; // GREEN
-    pixels.data[i + 2] = pixels.data[i + 2] * 0.5; // Blue
-  }
-  return pixels;
-}
-
-function rgbSplit(pixels) {
-  for(let i = 0; i < pixels.data.length; i+=4) {
-    pixels.data[i - 150] = pixels.data[i + 0]; // RED
-    pixels.data[i + 500] = pixels.data[i + 1]; // GREEN
-    pixels.data[i - 550] = pixels.data[i + 2]; // Blue
-  }
-  return pixels;
-}
-
-function greenScreen(pixels) {
-  const levels = {};
-
-  document.querySelectorAll('.rgb input').forEach((input) => {
-    levels[input.name] = input.value;
-  });
-
-  for (i = 0; i < pixels.data.length; i = i + 4) {
-    red = pixels.data[i + 0];
-    green = pixels.data[i + 1];
-    blue = pixels.data[i + 2];
-    alpha = pixels.data[i + 3];
-
-    if (red >= levels.rmin
-      && green >= levels.gmin
-      && blue >= levels.bmin
-      && red <= levels.rmax
-      && green <= levels.gmax
-      && blue <= levels.bmax) {
-      // take it out!
-      pixels.data[i + 3] = 0;
-    }
-  }
-
-  return pixels;
 }
 
 getVideo();
