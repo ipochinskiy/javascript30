@@ -74,7 +74,17 @@
     const minsHand = document.querySelector('.min-hand');
     const hourHand = document.querySelector('.hour-hand');
 
-    const setDate = (hand, value) => hand.style.transform = `rotate(${value}deg)`;
+    const setDate = (hand, value) => {
+      if (value === 90) {
+        hand.style.removeProperty('transition');
+      }
+
+      hand.style.transform = `rotate(${value}deg)`;
+
+      if (!hand.style.transition) {
+        hand.style.transition = 'all 0.05s';
+      }
+    };
 
     const s2d = ({ s }) => ((s / 60) * 360) + 90;
     const m2d = ({ m, s }) => ((m / 60) * 360) + ((s / 60) * 6) + 90;
